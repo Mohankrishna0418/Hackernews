@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { tokenmiddleware } from "./middleware/token-middleware";
 import { GetAllUsers, GetMe } from "../controllers/users/user-controller";
 import { GetAllUsersError, GetMeError } from "../controllers/users/user-types";
+import { getPagination } from "../extras/pagination";
 
 export const usersRoutes = new Hono();
 
@@ -23,16 +24,17 @@ usersRoutes.get("/me", tokenmiddleware, async (context) => {
   }
 });
 
-usersRoutes.get("/all", tokenmiddleware, async (context) => {
+usersRoutes.get("/", tokenmiddleware, async (context) => {
   try {
-    const result = await GetAllUsers();
+    const { page, limit } = getPagination(context);
+    const result = await GetAllUsers({ page, limit });
     if (!result) {
-      return context.json({ error: "Users not found" }, 404);
+      return context.json({ error: "No users found" }, 404);
     }
     return context.json(result, 200);
   } catch (error) {
     if (error === GetAllUsersError.NO_USERS_FOUND) {
-      return context.json({ error: "Users not found" }, 404);
+      return context.json({ error: "No users found" }, 404);
     }
     if (error === GetAllUsersError.UNKNOWN) {
       return context.json({ error: "Unknown error" }, 500);

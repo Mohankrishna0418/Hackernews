@@ -25,19 +25,41 @@ export const GetMe = async (parameters: {
     }
 }
 
-export const GetAllUsers = async (): Promise<GetAllUsersResult> => {
-    try {
-        const users = await prisma.user.findMany();
-        if (!users) {
+export const GetAllUsers = async (parameters: {
+        page: number;
+        limit: number;
+      }): Promise<GetAllUsersResult> => {
+        try {
+          const { page, limit } = parameters;
+          const skip = (page - 1) * limit;
+      
+          // First we will check if there are any users at all
+          const totalUsers = await prisma.user.count();
+          if (totalUsers === 0) {
             throw GetAllUsersError.NO_USERS_FOUND;
+          }
+      
+          // Then we will check if the requested page exists
+          const totalPages = Math.ceil(totalUsers / limit);
+          if (page > totalPages) {
+            throw GetAllUsersError.PAGE_BEYOND_LIMIT;
+          }
+      
+          const users = await prisma.user.findMany({
+            orderBy: { name: "asc" },
+            skip,
+            take: limit,
+          });
+      
+          return { users };
+        } catch (e) {
+          console.error(e);
+          if (
+            e === GetAllUsersError.NO_USERS_FOUND ||
+            e === GetAllUsersError.PAGE_BEYOND_LIMIT
+          ) {
+            throw e;
+          }
+          throw GetAllUsersError.UNKNOWN;
         }
-        const result: GetAllUsersResult = {
-            users: users,
-        }
-        return result;
-        
-    } catch (e) {
-        console.error(e);
-        throw GetAllUsersError.UNKNOWN;
-    }
-}
+      };
