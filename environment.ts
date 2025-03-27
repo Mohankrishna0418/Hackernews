@@ -1,0 +1,1 @@
+export const jwtsecretkey = process.env.SECRET_KEY || process.exit(1);
