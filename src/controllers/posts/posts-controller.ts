@@ -5,7 +5,24 @@ import { type GetPostResult, type GetAllPost,
     DeletePostError } from "./posts-types";
 
 //get all posts
-export const GetAllPosts = async (): Promise<GetAllPost> => {
+export const GetAllPosts = async (parameters: {
+    page: number;
+    limit: number;
+}): Promise<GetAllPost> => {
+    const { page, limit } = parameters;
+              const skip = (page - 1) * limit;
+          
+              // First we will check if there are any users at all
+              const totalUsers = await prisma.user.count();
+              if (totalUsers === 0) {
+                throw GetAllPostError.NO_POST_FOUND;
+              }
+          
+              // Then we will check if the requested page exists
+              const totalPages = Math.ceil(totalUsers / limit);
+              if (page > totalPages) {
+                throw GetAllPostError.POST_BEYOND_LIMIT;
+              }
     try {
         const posts = await prisma.post.findMany({
             orderBy: { createdAt: "desc" },

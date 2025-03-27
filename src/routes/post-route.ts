@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { tokenmiddleware } from "./middleware/token-middleware";
 import { GetAllPosts, GetPost, CreatePost, DeletePost } from "../controllers/posts/posts-controller";
 import { GetAllPostError, GetPostError, CreatePostError, DeletePostError } from "../controllers/posts/posts-types";
+import { getPagination } from "../extras/pagination";
 
 
 export const postRoutes = new Hono();
@@ -28,8 +29,11 @@ postRoutes.get("/:id", tokenmiddleware, async (context) => {
 //get all posts
 postRoutes.get("", tokenmiddleware, async (context) => {
     try {
-      //const { page, limit } = getPagination(context);
-      const result = await GetAllPosts();
+      const { page, limit } = getPagination(context);
+      const result = await GetAllPosts({ page, limit });
+      if (!result) {
+        return context.json({ error: "No posts found in the system!" }, 404);
+      }
       return context.json(result, 200);
     } catch (error) {
       if (error === GetAllPostError.NO_POST_FOUND) {
