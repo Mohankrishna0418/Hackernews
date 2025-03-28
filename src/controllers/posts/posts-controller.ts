@@ -10,8 +10,6 @@ export const GetAllPosts = async (parameters: {
     limit: number;
 }): Promise<GetAllPost> => {
     const { page, limit } = parameters;
-              const skip = (page - 1) * limit;
-          
               // First we will check if there are any users at all
               const totalUsers = await prisma.user.count();
               if (totalUsers === 0) {
