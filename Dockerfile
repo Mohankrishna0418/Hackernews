@@ -13,8 +13,7 @@ COPY prisma ./prisma
 RUN npm install
 
 # Generate Prisma client if schema exists
-RUN if [ -f "./prisma/schema.prisma" ]; then npx prisma generate; else echo "Skipping prisma generate"; fi
-
+RUN if [ -f "./prisma/schema.prisma" ]; then npx prisma generate; fi
 # Copy the rest of the application
 COPY . .
 
