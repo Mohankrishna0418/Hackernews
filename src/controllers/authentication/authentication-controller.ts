@@ -1,5 +1,5 @@
 import { LoginWithUsernameAndPasswordError, SignupError, type SignUpWithUsernameAndPasswordResponseResult, type LoginWithUsernameAndPassword } from "./authentication-types";
-import jwt from "jsonwebtoken";
+import * as jwt from "jsonwebtoken";
 import { prisma } from "../../extras/prisma";
 import { createHash } from "crypto";    
 import { jwtsecretkey } from "../../../environment";
