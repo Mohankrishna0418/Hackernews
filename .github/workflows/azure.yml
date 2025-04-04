@@ -11,8 +11,8 @@ env:
   CONTAINER_APPS_ENVIRONMENT: HackerNewsContainerAppsEnvironment
   LOG_ANALYTICS_WORKSPACE: HackerNewsLogAnalyticsWorkspace
   ACR_REGISTRY: hackernews1si22is404.azurecr.io # This has to be unique (at least the `hackerNews` bit)
-  ACR_REPOSITORY_NAME: hackerNews
-  CONTAINER_APP_NAME: hackerNews
+  ACR_REPOSITORY_NAME: hackernews
+  CONTAINER_APP_NAME: hackernews
   TARGET_PORT: 3000
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_GITHUB_ACTIONS }}
+          creds: ${{ secrets.GitHubActions1SI22IS404 }}
 
       # INFRA ENSURE BLOCKS
       - name: Check Resource Group exists
