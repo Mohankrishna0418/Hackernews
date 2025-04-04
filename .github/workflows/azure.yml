@@ -10,7 +10,7 @@ env:
   RESOURCE_GROUP: HackerNews
   CONTAINER_APPS_ENVIRONMENT: HackerNewsContainerAppsEnvironment
   LOG_ANALYTICS_WORKSPACE: HackerNewsLogAnalyticsWorkspace
-  ACR_REGISTRY: hackernews.azurecr1si22is404.io # This has to be unique (at least the `hackerNews` bit)
+  ACR_REGISTRY: hackernews1si22is404.azurecr.io # This has to be unique (at least the `hackerNews` bit)
   ACR_REPOSITORY_NAME: hackerNews
   CONTAINER_APP_NAME: hackerNews
   TARGET_PORT: 3000
