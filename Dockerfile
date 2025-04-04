@@ -5,11 +5,11 @@ WORKDIR /app
 # Copy necessary files first (to improve caching)
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY package-lock.json ./
 COPY tsconfig.build.json ./
 COPY prisma ./prisma
 
 # Install dependencies (including devDependencies)
-ENV NODE_ENV=development
 RUN npm install
 
 # Generate Prisma client if schema exists
