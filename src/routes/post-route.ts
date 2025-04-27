@@ -3,12 +3,13 @@ import { tokenmiddleware } from "./middleware/token-middleware";
 import { GetAllPosts, GetPost, CreatePost, DeletePost } from "../controllers/posts/posts-controller";
 import { GetAllPostError, GetPostError, CreatePostError, DeletePostError } from "../controllers/posts/posts-types";
 import { getPagination } from "../extras/pagination";
+import { sessionMiddleware } from "./middleware/session-middleware";
 
 
 export const postRoutes = new Hono();
 
 //get single post
-postRoutes.get("/:id", tokenmiddleware, async (context) => {
+postRoutes.get("/:id", sessionMiddleware, async (context) => {
     try {
         const postId = context.req.param("id");
         const result = await GetPost({ postId });
@@ -27,7 +28,7 @@ postRoutes.get("/:id", tokenmiddleware, async (context) => {
 });
     
 //get all posts
-postRoutes.get("", tokenmiddleware, async (context) => {
+postRoutes.get("", async (context) => {
     try {
       const { page, limit } = getPagination(context);
       const result = await GetAllPosts({ page, limit });
@@ -47,9 +48,9 @@ postRoutes.get("", tokenmiddleware, async (context) => {
   });
 
 //create post
-postRoutes.post("/", tokenmiddleware, async (context) => {
+postRoutes.post("/", sessionMiddleware, async (context) => {
     try {
-        const userId = context.get("userId");
+        const userId = context.get("user").id;
         const { title, content } = await context.req.json();
         const result = await CreatePost({ userId, title, content });
         return context.json(result, 200);
@@ -67,7 +68,7 @@ postRoutes.post("/", tokenmiddleware, async (context) => {
 });  
 
 //delete post
-postRoutes.delete("/:id", tokenmiddleware, async (context) => {
+postRoutes.delete("/:id", sessionMiddleware, async (context) => {
     try {
         const postId = context.req.param("id");
         const result = await DeletePost({ postId });
