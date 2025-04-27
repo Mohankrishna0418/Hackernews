@@ -2,6 +2,8 @@ import type { Like } from "@prisma/client";
 
 export type GetLikeResult = { 
     like: Like[];
+    userHasLiked: boolean;
+    totalLikes: number;
 }
 
 export enum GetLikeError {

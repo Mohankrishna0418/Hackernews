@@ -6,49 +6,41 @@ import { type GetLikeResult,
 //get All like
 export const GetLike = async (parameters: {
     postId: string;
-    page: number;
-    limit: number;
+    userId: string; // <-- Also pass userId from frontend
 }): Promise<GetLikeResult> => {
-    const { postId, page, limit } = parameters;
+    const { postId, userId } = parameters;
+
     const post = await prisma.post.findUnique({
-        where: { id: parameters.postId },
+        where: { id: postId },
     });
-    if (!post){
+    if (!post) {
         throw GetLikeError.POST_NOT_FOUND;
     }
-        // First we will check if there are any users at all
-        const totalUsers = await prisma.like.count();
-        if (totalUsers === 0) {
-            throw GetLikeError.LIKE_NOT_FOUND;
-        }
-        const totalPages = Math.ceil(totalUsers / limit);
-        if (page > totalPages) {
-            throw GetLikeError.POST_BEYOND_LIMIT;
-        }
-    try {
-        
-        const like = await prisma.like.findMany({
-            where: {postId},
-            orderBy: { createdAt: "desc" },
-            include: {
-                user: true
-            }
-        });
 
-        if (!like) {
-            throw GetLikeError.LIKE_NOT_FOUND;
-        }
+    const likes = await prisma.like.findMany({
+        where: { postId },
+        orderBy: { createdAt: "desc" },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    username: true,
+                },
+            },
+        },
+    });
 
-        const result: GetLikeResult = {
-            like: like,
-        }
+    const totalLikes = likes.length;
 
-        return result;
-    } catch (e) {
-        console.error(e);
-        throw GetLikeError.UNKNOWN;
-    }
+    const userHasLiked = likes.some((like) => like.userId === userId);
+
+    return {
+        totalLikes,
+        userHasLiked,
+        like: likes,
+    };
 };
+
 
 
 //post likes
@@ -96,18 +88,22 @@ export const PostLike = async (parameters: {
         if (e === PostLikeError.LIKE_ALREADY_EXISTS) {
             throw e;
         }
+        
 
         console.error(e);
         throw PostLikeError.UNKNOWN;
     }
 };
+// delete a like based on postId and userId
 export const DeleteLike = async (parameters: {
     postId: string;
     userId: string;
 }): Promise<DeleteLikeResult> => {
     try {
-        const like = await prisma.like.delete({
-            where: { id: parameters.postId,
+        const like = await prisma.like.findFirst({
+            where: {
+                postId: parameters.postId,
+                userId: parameters.userId,
             },
         });
 
@@ -115,20 +111,17 @@ export const DeleteLike = async (parameters: {
             throw DeleteLikeError.LIKE_NOT_FOUND;
         }
 
+        const deletedLike = await prisma.like.delete({
+            where: { id: like.id },
+        });
+
         const result: DeleteLikeResult = {
-            like: like,
-        }   
+            like: deletedLike,
+        };
 
         return result;
-    }
-    catch (e) {
-        if (e === DeleteLikeError.LIKE_NOT_FOUND){
-            throw e;
-        }
-        if (e === DeleteLikeError.POST_NOT_FOUND){
-            throw e;
-        }
+    } catch (e) {
         console.error(e);
         throw DeleteLikeError.UNKNOWN;
-    }   
+    }
 };
