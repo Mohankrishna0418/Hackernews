@@ -1,19 +1,24 @@
-import { prisma } from "../../extras/prisma";
+import { prismaClient as prisma } from "../../integration/prisma";
 import {
   GetCommentsError,
   CreateCommentError,
-  type GetComments,
-  type CreateComments,
+  type GetCommentsResult,
+  type CreateCommentResult,
   DeleteCommentError,
   UpdateCommentError,
-  type UpdateComments,
+  type UpdateCommentResult,
+  type GetCommentsOnPostsResult,
+  type GetCommentsOnMeResult,
+  GetCommentsOnMeError,
+  GetCommentsOnUserError,
+  type GetCommentsOnUserResult,
 } from "./comments-types";
 
-export const GetComment = async (parameters: {
+export const GetComments = async (parameters: {
   postId: string;
   page: number;
   limit: number;
-}): Promise<GetComments> => {
+}): Promise<GetCommentsResult> => {
   try {
     const { postId, page, limit } = parameters;
 
@@ -62,13 +67,11 @@ export const GetComment = async (parameters: {
     return { comments };
   } catch (e) {
     console.error(e);
-    if (e === GetCommentsError.POST_NOT_FOUND) {
-      throw e;
-    }
-    if (e === GetCommentsError.COMMENTS_NOT_FOUND) {
-      throw e;
-    }
-    if (e === GetCommentsError.PAGE_BEYOND_LIMIT) {
+    if (
+      e === GetCommentsError.POST_NOT_FOUND ||
+      e === GetCommentsError.COMMENTS_NOT_FOUND ||
+      e === GetCommentsError.PAGE_BEYOND_LIMIT
+    ) {
       throw e;
     }
     throw GetCommentsError.UNKNOWN;
@@ -79,7 +82,7 @@ export const CreateComment = async (parameters: {
   postId: string;
   userId: string;
   content: string;
-}): Promise<CreateComments> => {
+}): Promise<CreateCommentResult> => {
   try {
     const { postId, userId, content } = parameters;
 
@@ -89,8 +92,15 @@ export const CreateComment = async (parameters: {
 
     const post = await prisma.post.findUnique({
       where: { id: postId },
+      include: {
+        author: {
+          select: {
+            username: true,
+            name: true,
+          },
+        },
+      },
     });
-
     if (!post) {
       throw CreateCommentError.POST_NOT_FOUND;
     }
@@ -114,10 +124,10 @@ export const CreateComment = async (parameters: {
     return { comment };
   } catch (e) {
     console.error(e);
-    if (e === GetCommentsError.POST_NOT_FOUND) {
-      throw e;
-    }
-    if (e === CreateCommentError.INVALID_INPUT) {
+    if (
+      e === CreateCommentError.POST_NOT_FOUND ||
+      e === CreateCommentError.INVALID_INPUT
+    ) {
       throw e;
     }
     throw CreateCommentError.UNKNOWN;
@@ -128,7 +138,7 @@ export const UpdateComment = async (parameters: {
   commentId: string;
   userId: string;
   content: string;
-}): Promise<UpdateComments> => {
+}): Promise<UpdateCommentResult> => {
   try {
     const { commentId, userId, content } = parameters;
 
@@ -171,16 +181,12 @@ export const UpdateComment = async (parameters: {
     return { comment };
   } catch (e) {
     console.error(e);
-    if (e === UpdateCommentError.COMMENT_NOT_FOUND) {
-      throw e;
-    }
-    if (e === UpdateCommentError.INVALID_INPUT) {
-      throw e;
-    }
-    if (e === UpdateCommentError.NO_CHANGES) {
-      throw e;
-    }
-    if (e === UpdateCommentError.UNAUTHORIZED) {
+    if (
+      e === UpdateCommentError.COMMENT_NOT_FOUND ||
+      e === UpdateCommentError.INVALID_INPUT ||
+      e === UpdateCommentError.NO_CHANGES ||
+      e === UpdateCommentError.UNAUTHORIZED
+    ) {
       throw e;
     }
     throw UpdateCommentError.UNKNOWN;
@@ -211,12 +217,178 @@ export const DeleteComment = async (parameters: {
     });
   } catch (e) {
     console.error(e);
-    if (e === DeleteCommentError.COMMENT_NOT_FOUND) {
-      throw e;
-    }
-    if (e === DeleteCommentError.UNAUTHORIZED) {
+    if (
+      e === DeleteCommentError.COMMENT_NOT_FOUND ||
+      e === DeleteCommentError.UNAUTHORIZED
+    ) {
       throw e;
     }
     throw DeleteCommentError.UNKNOWN;
+  }
+};
+
+export const GetCommentsOnPosts = async (parameters: {
+  page: number;
+  limit: number;
+}): Promise<GetCommentsOnPostsResult> => {
+  try {
+    const { page, limit } = parameters;
+
+    if (page < 1 || limit < 1) {
+      throw new Error("Page or limit is below 1");
+    }
+
+    const skip = (page - 1) * limit;
+
+    const totalComments = await prisma.comment.count({
+      where: { postId: { not: null } as any },
+    });
+
+    if (totalComments === 0) {
+      throw new Error("No comments found");
+    }
+
+    const totalPages = Math.ceil(totalComments / limit);
+
+    if (page > totalPages) {
+      throw new Error("Page exceeds total pages");
+    }
+
+    const comments = await prisma.comment.findMany({
+      where: { postId: { not: null } as any },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      include: {
+        user: {
+          select: {
+            username: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return { comments };
+  } catch (e) {
+    console.error(e);
+    throw new Error(e instanceof Error ? e.message : "Unknown error");
+  }
+};
+
+export const GetCommentsOnMe = async (parameters: {
+  userId: string;
+}): Promise<GetCommentsOnMeResult> => {
+  try {
+    const { userId } = parameters;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+      },
+    });
+    if (!user) {
+      throw GetCommentsOnMeError.USER_NOT_FOUND;
+    }
+    const comments = await prisma.comment.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        post: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    return { comments };
+  } catch (e) {
+    console.error(e);
+    if (e === GetCommentsOnMeError.COMMENTS_NOT_FOUND) {
+      throw e;
+    }
+    if (e === GetCommentsOnMeError.PAGE_BEYOND_LIMIT) {
+      throw e;
+    }
+    if (e === GetCommentsOnMeError.USER_NOT_FOUND) {
+      throw e;
+    }
+    throw GetCommentsOnMeError.UNKNOWN;
+  }
+};
+
+export const GetCommentsOnUser = async (parameters: {
+  username: string;
+  page: number;
+  limit: number;
+}): Promise<GetCommentsOnUserResult> => {
+  try {
+    const { username, page, limit } = parameters;
+
+    const user = await prisma.user.findUnique({
+      where: { username },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!user) {
+      throw GetCommentsOnUserError.USER_NOT_FOUND;
+    }
+
+    if (page < 1 || limit < 1) {
+      throw new Error("Page or limit is below 1");
+    }
+
+    const skip = (page - 1) * limit;
+
+    const totalComments = await prisma.comment.count({
+      where: { userId: user.id },
+    });
+
+    if (totalComments === 0) {
+      throw new Error("No comments found");
+    }
+
+    const totalPages = Math.ceil(totalComments / limit);
+
+    if (page > totalPages) {
+      throw new Error("Page exceeds total pages");
+    }
+
+    const comments = await prisma.comment.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      include: {
+        post: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    return { comments };
+  } catch (e) {
+    console.error(e);
+    if (e === GetCommentsOnUserError.COMMENTS_NOT_FOUND) {
+      throw e;
+    }
+    if (e === GetCommentsOnUserError.PAGE_BEYOND_LIMIT) {
+      throw e;
+    }
+    if (e === GetCommentsOnUserError.USER_NOT_FOUND) {
+      throw e;
+    }
+    if (e === GetCommentsOnUserError.POST_NOT_FOUND) {
+      throw e;
+    }
+    throw GetCommentsOnUserError.UNKNOWN;
   }
 };

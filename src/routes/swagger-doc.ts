@@ -11,7 +11,7 @@ swaggerDocument.get("/docs", (c) => {
     description: "HackerNews clone server",
     contact: {
       name: "HackerNews-Server",
-      url: "https://github.com/Mahesh5726/hackernews-server",
+      url: "https://github.com/Mohankrishna0418/hackernews-server",
     },
   },
   servers: [
@@ -20,7 +20,7 @@ swaggerDocument.get("/docs", (c) => {
       description: "Development server",
     },
     {
-      url: "https://hackernews.lemonisland-20d31e0a.centralindia.azurecontainerapps.io/",
+      url: "https://hackernews.kinddune-88039013.centralindia.azurecontainerapps.io/",
       description: "Production server",
     },
   ],

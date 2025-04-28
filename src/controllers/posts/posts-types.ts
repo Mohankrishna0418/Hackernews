@@ -1,23 +1,14 @@
-import type { Post } from "@prisma/client";
+import type { Comment, Post } from "../../generated/prisma";
 
-export type GetPostResult = {
-    post: Post
-}
 
-export enum GetPostError {
-    UNKNOWN = "UNKNOWN",
-    POST_NOT_FOUND = "POST_NOT_FOUND",
-    POST_BEYOND_LIMIT = "POST_BEYOND_LIMIT",
-}
-
-export type GetAllPost = {
+export type GetPostsResult = {
     posts: Post[]
 }
 
-export enum GetAllPostError {
-    NO_POST_FOUND = "NO_POAT_FOUND",
-    POST_BEYOND_LIMIT = "POST_BEYOND_LIMIT",
-    UNKNOWN = "UNKNOWN",
+export enum GetPostsError {
+  POSTS_NOT_FOUND = "POSTS_NOT_FOUND",
+  PAGE_BEYOND_LIMIT = "PAGE_BEYOND_LIMIT",
+  UNKNOWN = "UNKNOWN"
 }
 
 export type CreatePostResult = {
@@ -25,17 +16,53 @@ export type CreatePostResult = {
 }
 
 export enum CreatePostError {
-    UNKNOWN = "UNKNOWN",
     USER_NOT_FOUND = "USER_NOT_FOUND",
-    REQUIRED_FIELD_MISSING = "REQUIRED_FIELD_MISSING",
-}   
+    TITLE_REQUIRED = "TITLE_REQUIRED",
+    UNKNOWN = "UNKNOWN"
+}
 
-export type DeletePostResult = {
+export type GetPostByIdResult = {
     post: Post
 }
 
+export enum GetPostByIdError {
+    POST_NOT_FOUND = "POST_NOT_FOUND",
+    UNKNOWN = "UNKNOWN"
+}
+
 export enum DeletePostError {
-    UNKNOWN = "UNKNOWN",
+    USER_NOT_FOUND = "USER_NOT_FOUND",
+    POST_NOT_FOUND = "POST_NOT_FOUND",
+    UNKNOWN = "UNKNOWN"
+}
+
+
+export type GetCommentsByPostIdResult = {
+    comments: Comment[]
+}
+
+export enum GetCommentsByPostIdError {
+    POST_NOT_FOUND = "POST_NOT_FOUND",
+    UNKNOWN = "UNKNOWN"
+}
+
+export type CreateCommentByPostIdResult = {
+    comment: Comment
+}
+
+export enum CreateCommentByPostIdError {
     POST_NOT_FOUND = "POST_NOT_FOUND",
     USER_NOT_FOUND = "USER_NOT_FOUND",
+    UNKNOWN = "UNKNOWN"
+}       
+
+export type GetUserPostsBySlugResult = {
+    posts: Post[]
+}
+
+export enum GetUserPostsBySlugError {
+    USER_NOT_FOUND = "USER_NOT_FOUND",
+    POSTS_NOT_FOUND = "POSTS_NOT_FOUND",
+    PAGE_BEYOND_LIMIT = "PAGE_BEYOND_LIMIT",
+    UNKNOWN = "UNKNOWN"
 }
