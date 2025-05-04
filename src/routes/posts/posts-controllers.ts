@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { prismaClient as prisma } from "../../integration/prisma";
+import { prismaClient as prisma } from "../../lib/prisma";
 import {
   GetPostsError,
   CreatePostError,
@@ -13,6 +13,8 @@ import {
   CreateCommentByPostIdError,
   type CreateCommentByPostIdResult,
   GetUserPostsBySlugError,
+  SearchPostsError,
+  type SearchPostsResult,
 } from "./posts-types";
 
 export const GetPosts = async (parameter: {
@@ -421,5 +423,75 @@ export const GetUserPostsBySlug = async (parameters: {
       throw GetUserPostsBySlugError.PAGE_BEYOND_LIMIT;
     }
     throw GetUserPostsBySlugError.UNKNOWN;
+  }
+};
+
+export const SearchPosts = async (parameters: {
+  query: string;
+  page: number;
+  limit: number;
+}): Promise<SearchPostsResult> => {
+  try {
+    const { query, page, limit } = parameters;
+
+    if (typeof query !== "string" || query.trim() === "") {
+      throw SearchPostsError.QUERY_REQUIRED;
+    }
+
+    console.log("Received query:", query); // Log the query to confirm
+
+    // Add a debug log for the total count query to check database behavior
+    const totalPosts = await prisma.post.count({
+      where: {
+        title: {
+          contains: query,
+          mode: "insensitive",
+        },
+      },
+    });
+
+    console.log("Total matching posts:", totalPosts); // Log total posts count
+
+    if (totalPosts === 0) {
+      throw SearchPostsError.POSTS_NOT_FOUND;
+    }
+
+    const totalPages = Math.ceil(totalPosts / limit);
+
+    if (page > totalPages) {
+      throw SearchPostsError.PAGE_BEYOND_LIMIT;
+    }
+
+    const posts = await prisma.post.findMany({
+      where: {
+        title: {
+          contains: query,
+          mode: "insensitive",
+        },
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return {
+      posts,
+      page,
+      totalPages,
+      totalPosts,
+    };
+  } catch (e) {
+    console.error("Error during post search:", e); // More detailed logging for debugging
+    if (
+      e === SearchPostsError.QUERY_REQUIRED ||
+      e === SearchPostsError.POSTS_NOT_FOUND ||
+      e === SearchPostsError.PAGE_BEYOND_LIMIT
+    ) {
+      throw e;
+    }
+
+    throw SearchPostsError.UNKNOWN;
   }
 };

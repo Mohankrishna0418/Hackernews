@@ -5,7 +5,7 @@ import {
   type LogInWithUsernameAndPasswordResult,
   type SignUpWithUsernameAndPasswordResult,
 } from "./authentication-types";
-import { prismaClient as prisma } from "../../integration/prisma";
+import { prismaClient as prisma } from "../../lib/prisma";
 
 export const createPasswordHash = (parameters: {
   password: string;
@@ -52,7 +52,6 @@ export const signUpWithUsernameAndPassword = async (parameters: {
           email: parameters.email,
           emailVerified: false,
           displayUsername: parameters.username,
-          // about: null, // Removed as it is not a valid field
           image: null,
         },
       });

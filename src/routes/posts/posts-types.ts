@@ -66,3 +66,17 @@ export enum GetUserPostsBySlugError {
     PAGE_BEYOND_LIMIT = "PAGE_BEYOND_LIMIT",
     UNKNOWN = "UNKNOWN"
 }
+
+export type SearchPostsResult = {
+    posts: Post[]
+    page: number
+    totalPages: number
+    totalPosts: number
+}
+
+export enum SearchPostsError {
+    UNKNOWN = "UNKNOWN",
+    QUERY_REQUIRED = "QUERY_REQUIRED",
+    POSTS_NOT_FOUND = "POSTS_NOT_FOUND",
+    PAGE_BEYOND_LIMIT = "PAGE_BEYOND_LIMIT"
+}

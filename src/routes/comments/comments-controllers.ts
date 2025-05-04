@@ -1,4 +1,4 @@
-import { prismaClient as prisma } from "../../integration/prisma";
+import { prismaClient as prisma } from "../../lib/prisma";
 import {
   GetCommentsError,
   CreateCommentError,
@@ -40,10 +40,6 @@ export const GetComments = async (parameters: {
       where: { postId },
     });
 
-    if (totalComments === 0) {
-      throw GetCommentsError.COMMENTS_NOT_FOUND;
-    }
-
     const totalPages = Math.ceil(totalComments / limit);
     if (page > totalPages) {
       throw GetCommentsError.PAGE_BEYOND_LIMIT;
@@ -67,11 +63,10 @@ export const GetComments = async (parameters: {
     return { comments };
   } catch (e) {
     console.error(e);
-    if (
-      e === GetCommentsError.POST_NOT_FOUND ||
-      e === GetCommentsError.COMMENTS_NOT_FOUND ||
-      e === GetCommentsError.PAGE_BEYOND_LIMIT
-    ) {
+    if (e === GetCommentsError.POST_NOT_FOUND) {
+      throw e;
+    }
+    if (e === GetCommentsError.PAGE_BEYOND_LIMIT) {
       throw e;
     }
     throw GetCommentsError.UNKNOWN;

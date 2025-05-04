@@ -1,12 +1,12 @@
 import { Hono } from "hono";
 import { type Session, type User } from "better-auth";
 import { createMiddleware } from "hono/factory";
-import betterAuthClient from "../../integration/better-auth";
+import auth from "../../lib/auth";
 
 export const authRoute = new Hono();
 
-authRoute.on(["GET", "POST"], "*", (context) => {
-  return betterAuthClient.handler(context.req.raw);
+authRoute.on(["GET", "POST"], "/*", (context) => {
+  return auth.handler(context.req.raw);
 });
 
 export type SessionVariables = {
@@ -17,7 +17,7 @@ export type SessionVariables = {
 export const sessionMiddleware = createMiddleware<{
   Variables: SessionVariables;
 }>(async (context, next) => {
-  const session = await betterAuthClient.api.getSession({
+  const session = await auth.api.getSession({
     headers: context.req.raw.headers,
   });
 

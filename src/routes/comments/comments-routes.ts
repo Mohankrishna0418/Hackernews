@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { sessionMiddleware } from "./middleware/session-middleware";
+import { sessionMiddleware } from "../middleware/session-middleware";
 import {
   GetComments,
   CreateComment,
@@ -8,7 +8,7 @@ import {
   GetCommentsOnPosts,
   GetCommentsOnMe,
   GetCommentsOnUser,
-} from "../controllers/comments/comments-controller";
+} from "./comments-controllers";
 import {
   GetCommentsError,
   CreateCommentError,
@@ -17,8 +17,8 @@ import {
   GetCommentsOnPostsError,
   GetCommentsOnMeError,
   GetCommentsOnUserError,
-} from "../controllers/comments/comments-types";
-import { getPagination } from "../extras/pagination";
+} from "./comments-types";
+import { getPagination } from "../../extras/pagination";
 export const commentsRoutes = new Hono();
 
 commentsRoutes.get("/on/:postId", async (c) => {
@@ -30,9 +30,6 @@ commentsRoutes.get("/on/:postId", async (c) => {
   } catch (error) {
     if (error === GetCommentsError.POST_NOT_FOUND) {
       return c.json({ error: "Post not found" }, 404);
-    }
-    if (error === GetCommentsError.COMMENTS_NOT_FOUND) {
-      return c.json({ error: "No comments found on this post" }, 404);
     }
     if (error === GetCommentsError.PAGE_BEYOND_LIMIT) {
       return c.json({ error: "No comments found on the requested page" }, 404);
@@ -119,7 +116,7 @@ commentsRoutes.get("/on/posts", async (c) => {
       return c.json({ error: "Post not found" }, 404);
     }
     return c.json({ error: "Unknown error" }, 500);
-  } 
+  }
 });
 
 commentsRoutes.get("/me", sessionMiddleware, async (c) => {
@@ -140,7 +137,6 @@ commentsRoutes.get("/me", sessionMiddleware, async (c) => {
     return c.json({ error: "Unknown error" }, 500);
   }
 });
-
 
 commentsRoutes.get("/by/:slug", async (c) => {
   try {

@@ -1,12 +1,13 @@
 import { Hono } from "hono";
-import {
-  logInWithUsernameAndPassword,
-  signUpWithUsernameAndPassword,
-} from "../controllers/authentication/authentication-controller";
+
 import {
   LogInWithUsernameAndPasswordError,
   SignUpWithUsernameAndPasswordError,
-} from "../controllers/authentication/authentication-types";
+} from "../authentication/authentication-types";
+import {
+  logInWithUsernameAndPassword,
+  signUpWithUsernameAndPassword,
+} from "./authentication-controllers";
 
 export const authenticationRoutes = new Hono();
 
