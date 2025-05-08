@@ -6,8 +6,8 @@ import { username } from "better-auth/plugins";
 
 const auth = betterAuth({
   baseURL: serverUrl,
+  basePath: "/authentications",
   trustedOrigins: [webClientUrl],
-  secret: betterAuthSecret,
   advanced: {
     defaultCookieAttributes: {
       sameSite: "none",
@@ -23,6 +23,10 @@ const auth = betterAuth({
   },
   session: {
     modelName: "Session",
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60,
+    },
   },
   account: {
     modelName: "Account",
@@ -33,13 +37,8 @@ const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  plugins: [username()],
-  username: {
-    enabled: true,
-  },
   cookies: {
     enabled: true,
-    secure: true,
   },
 });
 
