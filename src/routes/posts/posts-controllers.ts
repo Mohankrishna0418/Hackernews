@@ -20,19 +20,17 @@ import {
 export const GetPosts = async (parameter: {
   page: number;
   limit: number;
-  userId?: string; // 👈 added userId
+  userId?: string;
 }): Promise<GetPostsResult | Context> => {
   try {
     const { page, limit, userId } = parameter;
     const skip = (page - 1) * limit;
 
-    // checking if the posts exist
     const totalPosts = await prisma.post.count();
     if (totalPosts === 0) {
       throw GetPostsError.POSTS_NOT_FOUND;
     }
 
-    // checking if given page number doesn't exist or is beyond limits
     const totalPages = Math.ceil(totalPosts / limit);
     if (page > totalPages) {
       throw GetPostsError.PAGE_BEYOND_LIMIT;
@@ -46,7 +44,6 @@ export const GetPosts = async (parameter: {
         author: {
           select: {
             id: true,
-            username: true,
             name: true,
           },
         },
@@ -59,7 +56,7 @@ export const GetPosts = async (parameter: {
           include: {
             user: {
               select: {
-                username: true,
+                id: true,
                 name: true,
               },
             },
@@ -77,7 +74,7 @@ export const GetPosts = async (parameter: {
       updatedAt: post.updatedAt,
       userId: post.author.id,
       user: {
-        username: post.author.username,
+        id: post.author.id,
         name: post.author.name,
       },
       likeCount: post.likes.length,
@@ -89,7 +86,7 @@ export const GetPosts = async (parameter: {
         content: comment.content,
         createdAt: comment.createdAt,
         user: {
-          username: comment.user.username,
+          id: comment.user.id,
           name: comment.user.name,
         },
       })),
@@ -116,7 +113,6 @@ export const GetUserPosts = async (parameters: {
   try {
     const { userId, page, limit } = parameters;
 
-    // checking if user has any posts
     const totalPosts = await prisma.post.count({
       where: { userId },
     });
@@ -125,7 +121,6 @@ export const GetUserPosts = async (parameters: {
       throw GetPostsError.POSTS_NOT_FOUND;
     }
 
-    // Check if requested page exists
     const totalPages = Math.ceil(totalPosts / limit);
     if (page > totalPages) {
       throw GetPostsError.PAGE_BEYOND_LIMIT;
@@ -138,7 +133,7 @@ export const GetUserPosts = async (parameters: {
       include: {
         author: {
           select: {
-            username: true,
+            id: true,
             name: true,
           },
         },
@@ -183,7 +178,7 @@ export const CreatePost = async (parameters: {
       include: {
         author: {
           select: {
-            username: true,
+            id: true,
             name: true,
           },
         },
@@ -244,7 +239,7 @@ export const GetPostById = async (parameters: {
       include: {
         author: {
           select: {
-            username: true,
+            id: true,
             name: true,
           },
         },
@@ -284,7 +279,7 @@ export const GetCommentsByPostId = async (parameters: {
       include: {
         user: {
           select: {
-            username: true,
+            id: true,
             name: true,
           },
         },
@@ -314,7 +309,7 @@ export const CreateCommentByPostId = async (parameters: {
       include: {
         author: {
           select: {
-            username: true,
+            id: true,
             name: true,
           },
         },
@@ -342,7 +337,7 @@ export const CreateCommentByPostId = async (parameters: {
       include: {
         user: {
           select: {
-            username: true,
+            id: true,
             name: true,
           },
         },
@@ -363,15 +358,15 @@ export const CreateCommentByPostId = async (parameters: {
 };
 
 export const GetUserPostsBySlug = async (parameters: {
-  slug: string;
+  name: string;
   page: number;
   limit: number;
 }): Promise<GetPostsResult> => {
   try {
-    const { slug, page, limit } = parameters;
+    const { name, page, limit } = parameters;
 
-    const user = await prisma.user.findUnique({
-      where: { username: slug },
+    const user = await prisma.user.findFirst({
+      where: { name },
       select: {
         id: true,
       },
@@ -380,7 +375,6 @@ export const GetUserPostsBySlug = async (parameters: {
     if (!user) {
       throw GetUserPostsBySlugError.USER_NOT_FOUND;
     }
-
     const totalPosts = await prisma.post.count({
       where: { userId: user.id },
     });
@@ -403,7 +397,7 @@ export const GetUserPostsBySlug = async (parameters: {
       include: {
         author: {
           select: {
-            username: true,
+            id: true,
             name: true,
           },
         },
@@ -438,9 +432,8 @@ export const SearchPosts = async (parameters: {
       throw SearchPostsError.QUERY_REQUIRED;
     }
 
-    console.log("Received query:", query); // Log the query to confirm
+    console.log("Received query:", query);
 
-    // Add a debug log for the total count query to check database behavior
     const totalPosts = await prisma.post.count({
       where: {
         title: {
@@ -450,7 +443,7 @@ export const SearchPosts = async (parameters: {
       },
     });
 
-    console.log("Total matching posts:", totalPosts); // Log total posts count
+    console.log("Total matching posts:", totalPosts);
 
     if (totalPosts === 0) {
       throw SearchPostsError.POSTS_NOT_FOUND;
@@ -483,7 +476,7 @@ export const SearchPosts = async (parameters: {
       totalPosts,
     };
   } catch (e) {
-    console.error("Error during post search:", e); // More detailed logging for debugging
+    console.error("Error during post search:", e);
     if (
       e === SearchPostsError.QUERY_REQUIRED ||
       e === SearchPostsError.POSTS_NOT_FOUND ||

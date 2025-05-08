@@ -2,11 +2,13 @@ import { Hono } from "hono";
 import { GetUsers, GetMe } from "./users-controllers";
 import { GetUsersError, GetMeError } from "./users-types";
 import { getPagination } from "../../extras/pagination";
-import { sessionMiddleware } from "../middleware/session-middleware";
+import { authenticationMiddleware } from "../middleware/session-middleware";
 import { prismaClient } from "../../lib/prisma";
-export const usersRoutes = new Hono();
+import type { SecureSession } from "../middleware/session-middleware";
 
-usersRoutes.all("/me", sessionMiddleware, async (context) => {
+export const usersRoutes = new Hono<SecureSession>();
+
+usersRoutes.all("/me", authenticationMiddleware, async (context) => {
   const user = context.get("user");
   const userId = user?.id;
 
@@ -15,7 +17,6 @@ usersRoutes.all("/me", sessionMiddleware, async (context) => {
   }
 
   if (context.req.method === "GET") {
-    // Existing GET method to fetch user profile
     try {
       const { page, limit } = getPagination(context);
       const result = await GetMe({ userId, page, limit });
@@ -34,7 +35,6 @@ usersRoutes.all("/me", sessionMiddleware, async (context) => {
       }
     }
   } else if (context.req.method === "POST") {
-    // New POST method to update "About" field
     try {
       const { about } = await context.req.json();
 
@@ -42,7 +42,6 @@ usersRoutes.all("/me", sessionMiddleware, async (context) => {
         return context.json({ error: "About field is required" }, 400);
       }
 
-      // Update the 'about' field in the database
       const updatedUser = await prismaClient.user.update({
         where: { id: userId },
         data: { about },
@@ -56,7 +55,7 @@ usersRoutes.all("/me", sessionMiddleware, async (context) => {
   }
 });
 
-usersRoutes.get("/", sessionMiddleware, async (context) => {
+usersRoutes.get("/", authenticationMiddleware, async (context) => {
   try {
     const { page, limit } = getPagination(context);
 
