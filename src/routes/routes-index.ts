@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { authenticationsRoutes } from "./authentication/authentication-routes";
+import { authenticationsRoutes } from "./authentications/authentication-routes";
 import { usersRoutes } from "./users/users-routes";
 import { postsRoutes } from "./posts/posts-routes";
 import { likesRoutes } from "./likes/likes-routes";
