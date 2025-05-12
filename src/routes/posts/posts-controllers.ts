@@ -488,3 +488,56 @@ export const SearchPosts = async (parameters: {
     throw SearchPostsError.UNKNOWN;
   }
 };
+
+export const SearchPostsAndUsers = async ({
+  query,
+  page = 1,
+  limit = 10,
+}: {
+  query: string;
+  page: number;
+  limit: number;
+}) => {
+  if (!query || query.trim() === "") {
+    throw SearchPostsError.QUERY_REQUIRED;
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [posts, users] = await Promise.all([
+    prisma.post.findMany({
+      where: {
+        OR: [
+          { title: { contains: query, mode: "insensitive" } },
+          { content: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: query, mode: "insensitive" } },
+          { email: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      skip,
+      take: limit,
+    }),
+  ]);
+
+  if (posts.length === 0 && users.length === 0) {
+    throw SearchPostsError.POSTS_NOT_FOUND;
+  }
+
+  return {
+    posts,
+    users,
+    pagination: {
+      page,
+      limit,
+    },
+  };
+};
